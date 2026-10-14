@@ -1,0 +1,877 @@
+<!DOCTYPE html>
+<html lang="my">
+<head>
+  <meta charset="UTF-8">
+  <style>
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      background: #f1f5f9;
+      color: #172033;
+      font-family: Arial, sans-serif;
+      line-height: 1.7;
+    }
+    main { max-width: 960px; margin: auto; padding: 18px; }
+    h1 { font-size: 23px; margin-bottom: 6px; }
+    h2 { font-size: 19px; margin-top: 0; }
+    .muted { color: #64748b; font-size: 14px; }
+    .panel {
+      background: white;
+      border-radius: 16px;
+      padding: 20px;
+      margin: 18px 0;
+      box-shadow: 0 3px 15px #00000008;
+    }
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 14px;
+    }
+    label { display: block; font-size: 14px; }
+    input, select, textarea, button {
+      width: 100%;
+      font: inherit;
+      border-radius: 9px;
+      padding: 10px;
+    }
+    input, select, textarea {
+      border: 1px solid #cbd5e1;
+      background: white;
+      margin-top: 5px;
+    }
+    button {
+      border: 0;
+      background: #2563eb;
+      color: white;
+      cursor: pointer;
+    }
+    button:disabled { opacity: .55; cursor: wait; }
+    .secondary { background: #e2e8f0; color: #172033; }
+    .danger { background: #dc2626; }
+    .full { grid-column: 1 / -1; }
+    .actions { display: flex; gap: 10px; margin-top: 15px; }
+    .cards {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 10px;
+      margin-top: 18px;
+    }
+    .card {
+      padding: 14px;
+      border-radius: 12px;
+      background: #eff6ff;
+      font-size: 13px;
+    }
+    .card strong { display: block; font-size: 21px; }
+    .scroll { overflow-x: auto; }
+    table {
+      border-collapse: collapse;
+      width: 100%;
+      min-width: 660px;
+      margin-top: 14px;
+      font-size: 14px;
+    }
+    th, td {
+      padding: 10px;
+      text-align: left;
+      border-bottom: 1px solid #e2e8f0;
+      white-space: nowrap;
+    }
+    td button { padding: 5px 9px; font-size: 13px; }
+    #message { min-height: 28px; color: #166534; }
+    #dailyNet { font-weight: bold; color: #1d4ed8; }
+    @media (max-width: 600px) {
+      .grid { grid-template-columns: 1fr; }
+      .cards { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      main { padding: 12px; }
+      .panel { padding: 15px; }
+    }
+  </style>
+</head>
+<body>
+<main>
+  <h1>နေ့စဉ် အလုပ်နှင့်ငွေစာရင်း</h1>
+  <div class="muted">
+    တစ်ရက်တစ်ကြိမ် မှတ်ပါ။
+    ရက်စွဲတူကို ပြန်သိမ်းရင် မူလစာရင်းကို ပြင်ပေးပါမယ်။
+    ငွေကြေးတစ်မျိုးတည်းဖြင့် ဖြည့်ပါ။
+  </div>
+
+  <section class="panel">
+    <h2>နေ့စဉ်စာရင်း ဖြည့်ရန်</h2>
+
+    <form id="entryForm">
+      <div class="grid">
+        <label>ရက်စွဲ
+          <input type="date" id="date" required>
+        </label>
+
+        <label>အလုပ်ဆင်းမှု
+          <select id="status">
+            <option value="work">အလုပ်ဆင်း</option>
+            <option value="off">နားရက် / ခွင့်ရက်</option>
+          </select>
+        </label>
+
+        <label>ပုံမှန် အလုပ်ချိန် — နာရီ
+          <input type="number" id="hours"
+                 min="0" step="0.5" value="8" required>
+        </label>
+
+        <label>တစ်ရက် လုပ်အားခ
+          <input type="number" id="wage"
+                 min="0" step="0.01" value="0" required>
+        </label>
+
+        <label>အဲဒီနေ့ရတဲ့ OT ကြေး
+          <input type="number" id="ot"
+                 min="0" step="0.01" value="0" required>
+        </label>
+
+        <label>တစ်နေ့စာ အခန်းခ
+          <input type="number" id="rent"
+                 min="0" step="0.01" value="0" required>
+        </label>
+
+        <label>ဆိုင်ကယ် ဆီဖိုး
+          <input type="number" id="fuel"
+                 min="0" step="0.01" value="0" required>
+        </label>
+
+        <label>အခြား အသုံးစရိတ်
+          <input type="number" id="other"
+                 min="0" step="0.01" value="0" required>
+        </label>
+
+        <label class="full">မှတ်ချက်
+          <textarea id="note" rows="2" maxlength="1000"></textarea>
+        </label>
+      </div>
+
+      <p id="dailyNet"></p>
+
+      <div class="actions">
+        <button type="submit">စာရင်း သိမ်းမယ်</button>
+        <button type="button" class="secondary" id="newButton">
+          စာရင်းအသစ် ဖြည့်မယ်
+        </button>
+      </div>
+    </form>
+
+    <p id="message" role="status"></p>
+  </section>
+
+  <section class="panel">
+    <h2>လစဉ်စာရင်းချုပ်</h2>
+
+    <label>ကြည့်လိုတဲ့လ
+      <input type="month" id="month">
+    </label>
+
+    <div class="cards">
+      <div class="card">အလုပ်ဆင်းရက်<strong id="days">0</strong></div>
+      <div class="card">စုစုပေါင်းဝင်ငွေ<strong id="income">0</strong></div>
+      <div class="card">အသုံးစရိတ်<strong id="expenses">0</strong></div>
+      <div class="card">ကျန်ငွေ<strong id="balance">0</strong></div>
+    </div>
+
+    <p class="muted" id="details"></p>
+
+    <div class="scroll">
+      <table>
+        <thead>
+          <tr>
+            <th>ရက်စွဲ</th>
+            <th>အလုပ်ဆင်းမှု</th>
+            <th>ဝင်ငွေ</th>
+            <th>အသုံးစရိတ်</th>
+            <th>ကျန်ငွေ</th>
+            <th>ပြင်ရန်</th>
+            <th>ဖျက်ရန်</th>
+          </tr>
+        </thead>
+        <tbody id="rows"></tbody>
+      </table>
+    </div>
+  </section>
+</main>
+
+<script>
+  const $ = id => document.getElementById(id);
+  const fields = [
+    "date", "status", "hours", "wage", "ot",
+    "rent", "fuel", "other", "note"
+  ];
+  const moneyFields = ["wage", "ot", "rent", "fuel", "other"];
+  let records = [];
+  let loadingVersion = 0;
+
+  function today() {
+    const d = new Date();
+    const pad = n => String(n).padStart(2, "0");
+    return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+  }
+
+  function format(n) {
+    return Number(n).toLocaleString("en-US", {
+      maximumFractionDigits: 2
+    });
+  }
+
+  function number(id) {
+    return Number($(id).value) || 0;
+  }
+
+  function message(text, error = false) {
+    $("message").textContent = text;
+    $("message").style.color = error ? "#dc2626" : "#166534";
+  }
+
+  function callServer(name, argument) {
+    return new Promise((resolve, reject) => {
+      const runner = google.script.run
+        .withSuccessHandler(resolve)
+        .withFailureHandler(reject);
+
+      if (name === "getRecords") runner.getRecords(argument);
+      else if (name === "saveRecord") runner.saveRecord(argument);
+      else if (name === "deleteRecord") runner.deleteRecord(argument);
+    });
+  }
+
+  function setBusy(busy) {
+    document.querySelectorAll("button").forEach(button => {
+      button.disabled = busy;
+    });
+  }
+
+  function updateDailyNet() {
+    const net = number("wage") + number("ot")
+      - number("rent") - number("fuel") - number("other");
+
+    $("dailyNet").textContent = "ဒီနေ့ ကျန်ငွေ — " + format(net);
+  }
+
+  function updateStatus(clearAmounts) {
+    const off = $("status").value === "off";
+
+    $("hours").disabled = off;
+    $("wage").disabled = off;
+
+    if (clearAmounts) {
+      $("hours").value = off ? 0 : 8;
+      if (off) $("wage").value = 0;
+    }
+
+    updateDailyNet();
+  }
+
+  function resetForm() {
+    $("entryForm").reset();
+    $("date").value = today();
+    updateStatus(true);
+  }
+
+  function editRecord(record) {
+    fields.forEach(key => {
+      $(key).value = record[key];
+    });
+
+    updateStatus(false);
+    message("စာရင်းကို ပြင်ပြီး သိမ်းမယ်ခလုတ် နှိပ်ပါ။");
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  }
+
+  function renderRecords() {
+    let days = 0, wage = 0, ot = 0;
+    let rent = 0, fuel = 0, other = 0, hours = 0;
+
+    $("rows").replaceChildren();
+
+    records.forEach(record => {
+      if (record.status === "work") days++;
+      hours += record.hours;
+      wage += record.wage;
+      ot +=လုပ်ပေးထားပါတယ်။ အောက်က ကုဒ်ကို **`index.html`** ဆိုတဲ့ဖိုင်အဖြစ် သိမ်းပြီး ဖုန်း၊ ကွန်ပျူတာ browser မှာ ဖွင့်သုံးနိုင်ပါတယ်။ အွန်လိုင်းတင်နည်းလည်း အောက်မှာ ပါပါတယ်။
+
+**ပါဝင်တာတွေ**
+- တစ်ရက်ကို စာရင်းတစ်ခုသာ သိမ်းမယ်။ ထပ်သိမ်းရင် အရင်စာရင်းကို ပြင်ပေးမယ်။
+- အလုပ်ချိန် ၈ နာရီ၊ နေ့စားလုပ်အားခ၊ OT ကြေး မှတ်နိုင်မယ်။
+- အခန်းခ၊ ဆိုင်ကယ်ဆီဖိုး၊ အခြားစရိတ် မှတ်နိုင်မယ်။
+- လစဉ်ဝင်ငွေ၊ အသုံးစရိတ်၊ ကျန်ငွေ တွက်ပေးမယ်။
+- စာရင်းကို ပြန်ပြင်၊ ဖျက်၊ အရန်ဖိုင်ထုတ်ပြီး ပြန်ထည့်နိုင်မယ်။
+
+**သတိပြုရန်** — ဒီဗားရှင်းမှာ စာရင်းတွေကို သုံးနေတဲ့ browser ထဲမှာ သိမ်းပါတယ်။ အွန်လိုင်းတင်သုံးနိုင်ပေမယ့် **ဖုန်းတစ်လုံးနဲ့တစ်လုံး စာရင်းအလိုအလျောက် မချိတ်ဆက်သေးပါ**။ Browser data ဖျက်ရင် စာရင်းပျောက်နိုင်လို့ အရန်ဖိုင် ထုတ်ထားပါ။
+
+### ၁။ ဒီကုဒ်ကို `index.html` အဖြစ် သိမ်းပါ
+
+```html
+<!DOCTYPE html>
+<html lang="my">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>နေ့စဉ် အလုပ်နှင့် ငွေစာရင်း</title>
+<style>
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background: #f1f5f9;
+    color: #172033;
+    font-family: system-ui, sans-serif;
+    line-height: 1.7;
+  }
+  main { max-width: 1000px; margin: auto; padding: 18px; }
+  h1 { font-size: 24px; margin-bottom: 4px; }
+  h2 { font-size: 19px; margin-top: 0; }
+  .muted { color: #64748b; font-size: 14px; }
+  .card {
+    background: white;
+    padding: 20px;
+    border-radius: 16px;
+    margin: 18px 0;
+    box-shadow: 0 3px 15px #1720330a;
+  }
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 14px;
+  }
+  label { display: block; font-size: 14px; margin-bottom: 5px; }
+  input, select, textarea, button { font: inherit; }
+  input, select, textarea {
+    width: 100%;
+    padding: 10px;
+    border: 1px solid #cbd5e1;
+    border-radius: 9px;
+    background: white;
+    color: #172033;
+  }
+  textarea { min-height: 75px; }
+  input:disabled { background: #f1f5f9; }
+  button, .file-button {
+    border: none;
+    border-radius: 9px;
+    background: #2563eb;
+    color: white;
+    padding: 10px 15px;
+    cursor: pointer;
+    display: inline-block;
+  }
+  .secondary { background: #475569; }
+  .danger { background: #dc2626; }
+  .actions { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 15px; }
+  .summary {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 10px;
+    margin-top: 16px;
+  }
+  .stat { background: #eff6ff; border-radius: 10px; padding: 14px; }
+  .stat strong { display: block; font-size: 20px; overflow-wrap: anywhere; }
+  .table-wrap { overflow-x: auto; margin-top: 15px; }
+  table { width: 100%; border-collapse: collapse; white-space: nowrap; }
+  th, td {
+    padding: 10px;
+    border-bottom: 1px solid #e2e8f0;
+    text-align: left;
+    font-size: 14px;
+  }
+  td button { padding: 5px 9px; margin-right: 5px; fontရပါတယ်။ **တစ်ရက်တစ်ကြိမ် အလုပ်ဆင်းရက်၊ လုပ်အားခ၊ OT ကြေး၊ အခန်းခနဲ့ ဆီဖိုး မှတ်နိုင်တဲ့ ဆော့ဝဲ** ကို အောက်မှာ ရေးပေးထားပါတယ်။
+
+ဖုန်းနဲ့ ကွန်ပျူတာ နှစ်မျိုးလုံးမှာ သုံးနိုင်ပါတယ်။ နေ့စဉ်စာရင်း ပြန်ပြင်နိုင်ပြီး လစဉ်စုစုပေါင်းနဲ့ ကျန်ငွေကိုလည်း ပြပေးပါတယ်။
+
+**သိထားရမယ့်အချက်** — ဒီဗားရှင်းမှာ စာရင်းတွေကို သုံးနေတဲ့ဖုန်း/ကွန်ပျူတာရဲ့ browser ထဲမှာ သိမ်းပါတယ်။ အွန်လိုင်းတင်သုံးနိုင်ပေမယ့် ဖုန်းတစ်လုံးနဲ့တစ်လုံး စာရင်းအလိုအလျောက် မချိတ်ဆက်သေးပါ။ Browser ဒေတာရှင်းရင် စာရင်းပျောက်နိုင်လို့ **CSV ထုတ်ယူရန်** ခလုတ်နဲ့ မိတ္တူသိမ်းထားပါ။
+
+### ဆော့ဝဲကုဒ်
+
+အောက်ကကုဒ်အားလုံးကို **`index.html`** ဆိုတဲ့ဖိုင်အဖြစ် သိမ်းပါ။
+
+```html
+<!DOCTYPE html>
+<html lang="my">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>နေ့စဉ် အလုပ်နှင့် ငွေစာရင်း</title>
+  <style>
+    * { box-sizing: border-box; }
+    body {
+      margin: 0; background: #f1f5f9; color: #172033;
+      font-family: system-ui, sans-serif; line-height: 1.7;
+    }
+    .container { max-width: 1000px; margin: auto; padding: 16px; }
+    h1 { font-size: 24px; margin-bottom: 4px; }
+    h2 { font-size: 19px; margin-top: 0; }
+    .muted { color: #64748b; font-size: 14px; }
+    .card {
+      background: white; border-radius: 16px; padding: 20px;
+      margin: 16px 0; box-shadow: 0 3px 16px #17203308;
+    }
+    .grid {
+      display: grid; grid-template-columns: repeat(2, 1fr); gap: 14px;
+    }
+    label { display: block; font-size: 14px; margin-bottom: 5px; }
+    input, select, textarea, button {
+      font: inherit; width: 100%; border-radius: 9px;
+    }
+    input, select, textarea {
+      border: 1px solid #cbd5e1; padding: 10px;
+      background: white; color: #172033;
+    }
+    input:focus, select:focus, textarea:focus {
+      outline: 2px solid #93c5fd;
+    }
+    button {
+      border: 0; padding: 11px 14px; background: #2563eb;
+      color: white; cursor: pointer;
+    }
+    button:hover { filter: brightness(.95); }
+    .secondary { background: #475569; }
+    .danger { background: #dc2626; }
+    .actions { display: flex; gap: 10px; margin-top: 14px; }
+    .summary {
+      display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px;
+    }
+    .stat { background: #eff6ff; border-radius: 12px; padding: 14px; }
+    .stat strong { display: block; font-size: 19px; color: #1d4ed8; }
+    .table-wrap { overflow-x: auto; }
+    table { width: 100%; border-collapse: collapse; font-size: 14px; }
+    th, td {
+      padding: 11px; border-bottom: 1px solid #e2e8f0;
+      text-align: left; white-space: nowrap;
+    }
+    th { background: #f8fafc; }
+    td button { width: auto; padding: 6px 10px; margin: 2px; }
+    #message { min-height: 26px; margin-top: 10px; }
+    .preview {
+      padding: 12px; background: #ecfdf5; color: #166534;
+      border-radius: 10px; margin-top: 14px;
+    }
+    @media (max-width: 600px) {
+      .grid { grid-template-columns: 1fr; }
+      .summary { grid-template-columns: repeat(2, 1fr); }
+      .card { padding: 16px; }
+      h1 { font-size: 21px; }
+    }
+  </style>
+</head>
+<body>
+<main class="container">
+  <h1>📅 နေ့စဉ် အလုပ်နှင့် ငွေစာရင်း</h1>
+  <div class="muted">အလုပ်ဆင်းရက် • လုပ်အားခ • OT • အသုံးစရိတ်</div>
+
+  <section class="card">
+    <h2>⚙️ ပုံမှန် သတ်မှတ်ချက်</h2>
+    <div class="grid">
+      <div>
+        <label for="defaultWage">တစ်ရက် လုပ်အားခ</label>
+        <input id="defaultWage" type="number" min="0" step="any" value="0">
+      </div>
+      <div>
+        <label for="currency">ငွေကြေးအမည်</label>
+        <input id="currency" value="ကျပ်" maxlength="20"
+               placeholder="ကျပ် / ဘတ်">
+      </div>
+    </div>
+    <button id="saveSettings" style="margin-top:14px">
+      သတ်မှတ်ချက် သိမ်းမယ်
+    </button>
+    <p class="muted">သတ်မှတ်ချက်ပြောင်းလည်း သိမ်းပြီးသားနေ့စာရင်း မပြောင်းပါ။</p>
+  </section>
+
+  <section class="card">
+    <h2>✍️ နေ့စဉ် စာရင်းမှတ်ရန်</h2>
+    <form id="entryForm">
+      <div class="grid">
+        <div>
+          <label for="date">ရက်စွဲ</label>
+          <input id="date" type="date" required>
+        </div>
+        <div>
+          <label for="status">အလုပ်ဆင်းမှု</label>
+          <select id="status">
+            <option value="work">အလုပ်ဆင်း</option>
+            <option value="off">နားရက်</option>
+            <option value="leave">ခွင့်ရက်</option>
+          </select>
+        </div>
+        <div>
+          <label for="hours">ပုံမှန် အလုပ်ချိန် — နာရီ</label>
+          <input id="hours" type="number" min="0" max="24"
+                 step="any" value="8" required>
+        </div>
+        <div>
+          <label for="wage">အဲဒီနေ့ လုပ်အားခ</label>
+          <input id="wage" type="number" min="0"
+                 step="any" value="0" required>
+        </div>
+        <div>
+          <label for="ot">အဲဒီနေ့ OT ကြေး</label>
+          <input id="ot" type="number" min="0"
+                 step="any" value="0" required>
+        </div>
+        <div>
+          <label for="room">အဲဒီနေ့ အခန်းခ</label>
+          <input id="room" type="number" min="0"
+                 step="any" value="0" required>
+        </div>
+        <div>
+          <label for="fuel">ဆိုင်ကယ် ဆီဖိုး</label>
+          <input id="fuel" type="number" min="0"
+                 step="any" value="0" required>
+        </div>
+        <div>
+          <label for="other">အခြား အသုံးစရိတ်</label>
+          <input id="other" type="number" min="0"
+                 step="any" value="0" required>
+        </div>
+      </div>
+      <div style="margin-top:14px">
+        <label for="note">မှတ်ချက်</label>
+        <textarea id="note" rows="2" maxlength="500"></textarea>
+      </div>
+      <div class="preview" id="preview"></div>
+      <div class="actions">
+        <button type="submit">💾 နေ့စာရင်း သိမ်းမယ်</button>
+        <button type="button" class="secondary" id="resetForm">
+          အသစ်ဖြည့်မယ်
+        </button>
+      </div>
+    </form>
+    <div id="message" role="status" aria-live="polite"></div>
+  </section>
+
+  <section class="card">
+    <h2>📊 လစဉ် စာရင်းချုပ်</h2>
+    <label for="month">ကြည့်ချင်တဲ့လ</label>
+    <input id="month" type="month" style="max-width:260px">
+    <p id="attendance" class="muted"></p>
+    <div class="summary">
+      <div class="stat">လုပ်အားခ<strong id="sumWage">0</strong></div>
+      <div class="stat">OT ကြေး<strong id="sumOt">0</strong></div>
+      <div class="stat">အသုံးစရိတ်<strong id="sumExpense">0</strong></div>
+      <div class="stat">ကျန်ငွေ<strong id="sumNet">0</strong></div>
+    </div>
+    <button id="exportCsv" class="secondary" style="margin-top:16px">
+      📥 စာရင်းအားလုံး CSV ထုတ်ယူရန်
+    </button>
+  </section>
+
+  <section class="card">
+    <h2>🗂️ ရွေးထားတဲ့လ၏ မှတ်တမ်းများ</h2>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>ရက်စွဲ</th><th>အခြေအနေ</th><th>နာရီ</th>
+            <th>လုပ်အားခ</th><th>OT</th><th>အခန်းခ</th>
+            <th>ဆီဖိုး</th><th>အခြား</th><th>ကျန်ငွေ</th>
+            <th>မှတ်ချက်</th><th>ပြင် / ဖျက်</th>
+          </tr>
+        </thead>
+        <tbody id="records"></tbody>
+      </table>
+    </div>
+    <p class="muted">
+      စာရင်းများကို ဒီ browser ထဲမှာသာ သိမ်းထားပါတယ်။
+      အရေးကြီးစာရင်းတွေကို CSV မိတ္တူ ထုတ်ထားပါ။
+    </p>
+  </section>
+</main>
+
+<script>
+  const $ = id => document.getElementById(id);
+  const KEY = "myDailyWorkLedger_v1";
+  let data = {
+    settings: { wage: 0, currency: "ကျပ်" },
+    entries: {}
+  };
+
+  function message(text, error = false) {
+    $("message").textContent = text;
+    $("message").style.color = error ? "#dc2626" : "#15803d";
+  }
+
+  try {
+    const saved = localStorage.getItem(KEY);
+    if (saved) {
+      const parsed = JSON.parse(saved);
+      if (!parsed.settings || !parsed.entries ||
+          typeof parsed.entries !== "object") {
+        throw new Error("Invalid saved data");
+      }
+      data = parsed;
+    }
+  } catch (error) {
+    message("သိမ်းထားတဲ့စာရင်း ဖတ်မရပါ။ Browser ဒေတာအခြေအနေ စစ်ပါ။", true);
+  }
+
+  function persist(next) {
+    try {
+      localStorage.setItem(KEY, JSON.stringify(next));
+      data = next;
+      return true;
+    } catch (error) {
+      message("သိမ်းမရပါ။ Browser storage ခွင့်ပြုထားမှုနဲ့ နေရာလွတ်ကို စစ်ပါ။", true);
+      return false;
+    }
+  }
+
+  function today() {
+    const d = new Date();
+    return [
+      d.getFullYear(),
+      String(d.getMonth() + 1).padStart(2, "0"),
+      String(d.getDate()).padStart(2, "0")
+    ].join("-");
+  }
+
+  function num(id) { return Number($(id).value) || 0; }
+  function format(n) {
+    return Number(n).toLocaleString("en-US", {
+      maximumFractionDigits: 2
+    });
+  }
+  function money(n) {
+    return format(n) + " " + data.settings.currency;
+  }
+  function expense(e) { return e.room + e.fuel + e.other; }
+  function net(e) { return e.wage + e.ot - expense(e); }
+
+  const statusLabels = {
+    work: "အလုပ်ဆင်း", off: "နားရက်", leave: "ခွင့်ရက်"
+  };
+  const numberFields = ["hours", "wage", "ot", "room", "fuel", "other"];
+
+  function readEntry() {
+    return {
+      date: $("date").value,
+      status: $("status").value,
+      hours: num("hours"),
+      wage: num("wage"),
+      ot: num("ot"),
+      room: num("room"),
+      fuel: num("fuel"),
+      other: num("other"),
+      note: $("note").value.trim()
+    };
+  }
+
+  function preview() {
+    $("preview").textContent =
+      "ဒီနေ့ ကျန်ငွေ = " + money(net(readEntry()));
+  }
+
+  function loadDate(date) {
+    $("date").value = date;
+    const e = data.entries[date];
+    $("status").value = e ? e.status : "work";
+    $("hours").value = e ? e.hours : 8;
+    $("wage").value = e ? e.wage : data.settings.wage;
+    ["ot", "room", "fuel", "other"].forEach(id => {
+      $(id).value = e ? e[id] : 0;
+    });
+    $("note").value = e ? e.note : "";
+    $("message").textContent = e
+      ? "ဒီရက်အတွက် စာရင်းရှိပြီးသားပါ။ ပြင်ပြီး ပြန်သိမ်းနိုင်ပါတယ်။"
+      : "";
+    preview();
+  }
+
+  function render() {
+    const entries = Object.values(data.entries)
+      .filter(e => e.date.startsWith($("month").value))
+      .sort((a, b) => b.date.localeCompare(a.date));
+
+    let wages = 0, ots = 0, expenses = 0, hours = 0, workDays = 0;
+    const tbody = $("records");
+    tbody.replaceChildren();
+
+    entries.forEach(e => {
+      wages += e.wage;
+      ots += e.ot;
+      expenses += expense(e);
+      hours += e.hours;
+      if (e.status === "work") workDays++;
+
+      const tr = document.createElement("tr");
+      const values = [
+        e.date, statusLabels[e.status], format(e.hours),
+        format(e.wage), format(e.ot), format(e.room),
+        format(e.fuel), format(e.other), format(net(e)), e.note
+      ];
+      values.forEach(value => {
+        const td = document.createElement("td");
+        td.textContent = value;
+        tr.appendChild(td);
+      });
+
+      const actions = document.createElement("td");
+      const edit = document.createElement("button");
+      edit.type = "button";
+      edit.textContent = "ပြင်";
+      edit.onclick = () => {
+        loadDate(e.date);
+        $("entryForm").scrollIntoView({
+          behavior: "smooth", block: "start"
+        });
+      };
+
+      const remove = document.createElement("button");
+      remove.type = "button";
+      remove.className = "danger";
+      remove.textContent = "ဖျက်";
+      remove.onclick = () => {
+        if (!confirm(e.date + " စာရင်းကို ဖျက်မလား?")) return;
+        const next = {
+          settings: { ...data.settings },
+          entries: { ...data.entries }
+        };
+        delete next.entries[e.date];
+        if (persist(next)) {
+          if ($("date").value === e.date) loadDate(e.date);
+          render();
+          message("စာရင်း ဖျက်ပြီးပါပြီ။");
+        }
+      };
+
+      actions.append(edit, remove);
+      tr.appendChild(actions);
+      tbody.appendChild(tr);
+    });
+
+    if (!entries.length) {
+      const tr = document.createElement("tr");
+      const td = document.createElement("td");
+      td.colSpan = 11;
+      td.textContent = "ဒီလအတွက် စာရင်းမရှိသေးပါ။";
+      tr.appendChild(td);
+      tbody.appendChild(tr);
+    }
+
+    $("sumWage").textContent = money(wages);
+    $("sumOt").textContent = money(ots);
+    $("sumExpense").textContent = money(expenses);
+    $("sumNet").textContent = money(wages + ots - expenses);
+    $("attendance").textContent =
+      "အလုပ်ဆင်း " + workDays + " ရက် • ပုံမှန်အလုပ်ချိန် " +
+      format(hours) + " နာရီ • မှတ်တမ်း " + entries.length + " ရက်";
+  }
+
+  $("saveSettings").onclick = () => {
+    const wage = Number($("defaultWage").value);
+    if (!Number.isFinite(wage) || wage < 0) {
+      message("လုပ်အားခကို သုည သို့မဟုတ် အပေါင်းကိန်း ဖြည့်ပါ။", true);
+      return;
+    }
+    const currency = $("currency").value.trim() || "ကျပ်";
+    const next = {
+      settings: { wage, currency },
+      entries: { ...data.entries }
+    };
+    if (persist(next)) {
+      if (!data.entries[$("date").value] &&
+          $("status").value === "work") {
+        $("wage").value = wage;
+      }
+      preview();
+      render();
+      message("ပုံမှန် သတ်မှတ်ချက် သိမ်းပြီးပါပြီ။");
+    }
+  };
+
+  $("date").addEventListener("change", () => {
+    if ($("date").value) loadDate($("date").value);
+  });
+
+  $("status").addEventListener("change", () => {
+    const working = $("status").value === "work";
+    $("hours").value = working ? 8 : 0;
+    $("wage").value = working ? data.settings.wage : 0;
+    if (!working) $("ot").value = 0;
+    preview();
+  });
+
+  $("entryForm").addEventListener("input", preview);
+
+  $("entryForm").addEventListener("submit", event => {
+    event.preventDefault();
+    if (!$("entryForm").reportValidity()) return;
+
+    const e = readEntry();
+    if (numberFields.some(id =>
+      !Number.isFinite(Number($(id).value)) || Number($(id).value) < 0
+    )) {
+      message("ငွေပမာဏနဲ့ အလုပ်ချိန်ကို မှန်ကန်စွာ ဖြည့်ပါ။", true);
+      return;
+    }
+
+    const exists = Boolean(data.entries[e.date]);
+    if (exists && !confirm("ဒီရက်ရဲ့ မူလစာရင်းကို ပြင်ပြီး သိမ်းမလား?")) {
+      return;
+    }
+
+    const next = {
+      settings: { ...data.settings },
+      entries: { ...data.entries, [e.date]: e }
+    };
+    if (persist(next)) {
+      $("month").value = e.date.slice(0, 7);
+      render();
+      message(exists ? "စာရင်း ပြင်သိမ်းပြီးပါပြီ။" : "နေ့စာရင်း သိမ်းပြီးပါပြီ။");
+    }
+  });
+
+  $("resetForm").onclick = () => loadDate(today());
+  $("month").addEventListener("change", render);
+
+  $("exportCsv").onclick = () => {
+    const entries = Object.values(data.entries)
+      .sort((a, b) => a.date.localeCompare(b.date));
+    if (!entries.length) {
+      message("ထုတ်ယူရန် စာရင်းမရှိသေးပါ။", true);
+      return;
+    }
+
+    const rows = [[
+      "ရက်စွဲ", "အခြေအနေ", "နာရီ", "လုပ်အားခ", "OT",
+      "အခန်းခ", "ဆီဖိုး", "အခြား", "ကျန်ငွေ", "ငွေကြေး", "မှတ်ချက်"
+    ]];
+
+    entries.forEach(e => rows.push([
+      e.date, statusLabels[e.status], e.hours, e.wage, e.ot,
+      e.room, e.fuel, e.other, net(e), data.settings.currency, e.note
+    ]));
+
+    function csvCell(value) {
+      let text = String(value ?? "");
+      // Spreadsheet formula အဖြစ် အလုပ်မလုပ်စေရန်။
+      if (typeof value === "string" && /^[\s]*[=+\-@]/.test(text)) {
+        text = "'" + text;
+      }
+      return '"' + text.replace(/"/g, '""') + '"';
+    }
+
+    const csv = "\uFEFF" +
+      rows.map(row => row.map(csvCell).join(",")).join("\r\n");
+    const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = "work-ledger-" + today() + ".csv";
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
+    message("CSV ဖိုင် ထုတ်ယူပြီးပါပြီ။");
+  };
+
+  $("defaultWage").value = data.settings.wage;
+  $("currency").value = data.settings.currency;
+  $("month").value = today().slice(0, 7);
+  loadDate(today());
+  render();
+</script>
+</body>
+</html>
